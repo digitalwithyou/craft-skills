@@ -1,7 +1,7 @@
 {
   "name": "craft-dev",
   "description": "Maintain and build Craft CMS 5 sites, optimised for DWY client projects: updates, deploys, feature adoption, templates, schema and front-end",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "author": {
     "name": "DWY (Digital With You)"
   },

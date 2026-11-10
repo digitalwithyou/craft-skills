@@ -4,7 +4,8 @@
 Deterministic enforcement of two rules that are expensive to break:
   1. Bash: composer / npm / npx / yarn / pnpm / php craft / ./craft must run through `ddev`.
      Running them on the host uses the wrong PHP/Node version and can corrupt vendor/ or
-     node_modules/. Denied, with the ddev-prefixed command as the reason.
+     node_modules/. Denied, with the ddev-prefixed command as the reason. Heredoc bodies and
+     quoted text (commit messages, file contents) are data and never checked.
   2. Edit/Write on config/project/*.yaml: Project Config is written by Craft, not by hand.
      Not blocked (mechanical renames are allowed by the conventions), but the user is asked.
 
@@ -22,7 +23,9 @@ import sys
 from pathlib import Path
 
 HOST_TOOLS = {"composer", "npm", "npx", "yarn", "pnpm"}
-SEGMENT_SPLIT = re.compile(r"&&|\|\||;|\||\n")
+SEPARATORS = ("&&", "||", ";", "|", "\n")
+# `<<EOF`, `<<-'EOF'`, `<< "EOF"`; not the here-string `<<<`.
+HEREDOC_START = re.compile(r"(?<!<)<<(-?)(?!<)\s*(['\"]?)([A-Za-z_][A-Za-z0-9_]*)\2")
 ENV_ASSIGNMENT = re.compile(r"^[A-Za-z_][A-Za-z0-9_]*=")
 PREFIXES = {"sudo", "time", "nice", "command", "exec"}
 
@@ -45,9 +48,58 @@ def first_words(segment: str) -> list[str]:
     return words
 
 
+def strip_heredoc_bodies(command: str) -> str:
+    """Drop heredoc bodies: they are data (a commit message, a file), not commands."""
+    kept: list[str] = []
+    pending: list[tuple[str, bool]] = []  # (delimiter, strip leading tabs) in order of appearance
+    for line in command.split("\n"):
+        if pending:
+            delimiter, strip_tabs = pending[0]
+            if (line.lstrip("\t") if strip_tabs else line) == delimiter:
+                pending.pop(0)
+            continue
+        kept.append(line)
+        pending.extend((m.group(3), m.group(1) == "-") for m in HEREDOC_START.finditer(line))
+    return "\n".join(kept)
+
+
+def command_segments(command: str) -> list[str]:
+    """Split on &&, ||, ;, | and newlines, but not inside quotes or after a backslash."""
+    segments: list[str] = []
+    current: list[str] = []
+    quote = ""
+    i = 0
+    while i < len(command):
+        char = command[i]
+        if quote:
+            current.append(char)
+            if char == quote:
+                quote = ""
+            elif char == "\\" and quote == '"' and i + 1 < len(command):
+                current.append(command[i + 1])
+                i += 1
+        elif char in "'\"":
+            quote = char
+            current.append(char)
+        elif char == "\\" and i + 1 < len(command):
+            current.append(char + command[i + 1])
+            i += 1
+        else:
+            separator = next((s for s in SEPARATORS if command.startswith(s, i)), None)
+            if separator:
+                segments.append("".join(current))
+                current = []
+                i += len(separator)
+                continue
+            current.append(char)
+        i += 1
+    segments.append("".join(current))
+    return segments
+
+
 def host_tool_violation(command: str) -> str | None:
     """Return the offending segment when a tool runs on the host instead of in DDEV."""
-    for raw in SEGMENT_SPLIT.split(command):
+    for raw in command_segments(strip_heredoc_bodies(command)):
         words = first_words(raw.strip())
         if not words:
             continue
