@@ -1,0 +1,19 @@
+{
+  "name": "dwy-craft",
+  "description": "Craft CMS 5 skills for developers, editors and clients, optimised for DWY client projects",
+  "owner": {
+    "name": "DWY (Digital With You)"
+  },
+  "plugins": [
+    {
+      "name": "craft-dev",
+      "source": "./plugins/craft-dev",
+      "description": "For developers: maintain (updates, deploys, feature adoption) and build (templates, schema, front-end) Craft CMS 5 sites, optimised for DWY client projects"
+    },
+    {
+      "name": "craft-content",
+      "source": "./plugins/craft-content",
+      "description": "For editors and clients: brand discovery and preparing pages as drafts in Craft CMS via its MCP server (NL source, EN/FR adaptations)"
+    }
+  ]
+}

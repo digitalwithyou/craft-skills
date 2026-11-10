@@ -1,0 +1,16 @@
+{
+  "name": "craft-content",
+  "description": "Brand discovery and page preparation for Craft CMS 5 sites through Craft's MCP server, drafts only, Dutch source with English and French adaptations",
+  "version": "0.1.0",
+  "author": {
+    "name": "DWY (Digital With You)"
+  },
+  "license": "MIT",
+  "keywords": [
+    "craft-cms",
+    "content",
+    "copywriting",
+    "brand-voice",
+    "mcp"
+  ]
+}

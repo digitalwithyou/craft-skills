@@ -1,0 +1,16 @@
+{
+  "name": "craft-dev",
+  "description": "Maintain and build Craft CMS 5 sites, optimised for DWY client projects: updates, deploys, feature adoption, templates, schema and front-end",
+  "version": "0.1.0",
+  "author": {
+    "name": "DWY (Digital With You)"
+  },
+  "license": "MIT",
+  "keywords": [
+    "craft-cms",
+    "craftcms",
+    "twig",
+    "ddev",
+    "vite"
+  ]
+}
